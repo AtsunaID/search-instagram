@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Instagram Cookies</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, button { margin-bottom: 10px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Instagram Cookies</h1>
+    <label for="cookies">Enter Instagram Cookies:</label><br>
+    <textarea id="cookies" placeholder="Paste your cookies here..."></textarea><br><br>
+    
+    <button id="proceedButton">Proceed to Search</button>
+
+    <script>
+        document.getElementById('proceedButton').addEventListener('click', function() {
+            const cookies = document.getElementById('cookies').value.trim();
+            if (!cookies) {
+                alert('Please enter your cookies!');
+                return;
+            }
+            // Redirect to the search page with cookies as a query parameter
+            window.location.href = `search.html?cookies=${encodeURIComponent(cookies)}`;
+        });
+    </script>
+
+</body>
+</html>

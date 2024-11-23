@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Account Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, button, textarea { margin-bottom: 10px; padding: 10px; }
+        textarea { width: 100%; height: 150px; }
+        #results { margin-top: 20px; }
+        .result { padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Instagram Account Search</h1>
+    
+    <label for="users">Enter Usernames and Keys:</label>
+    <textarea id="users" placeholder="Username|key\nUsername|key\n..."></textarea><br>
+    
+    <button id="startSearch">Start Search</button>
+    
+    <div id="results"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // Fetch cookies from the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const cookies = urlParams.get('cookies');
+
+        if (!cookies) {
+            alert('No cookies found. Please provide valid cookies.');
+            window.location.href = 'index.html'; // Redirect back to cookie input page if no cookies
+        }
+
+        // You can now use 'cookies' in the search process.
+        document.getElementById('startSearch').addEventListener('click', startSearch);
+
+        async function startSearch() {
+            const usersInput = document.getElementById('users').value.trim();
+            
+            if (!usersInput) {
+                alert('Please enter user data.');
+                return;
+            }
+
+            // Parse input usernames and keys
+            const users = usersInput.split('\n').map(line => {
+                const [username, key] = line.split('|');
+                return { username: username.trim(), key: key.trim() };
+            });
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Searching...';
+
+            let liveCount = 0;
+            let checkCount = 0;
+
+            // Perform search for each user
+            for (const user of users) {
+                const result = await searchInstagram(user.username, user.key, cookies);
+                if (result === 'live') {
+                    liveCount++;
+                } else {
+                    checkCount++;
+                }
+            }
+
+            // Display result counts
+            resultsDiv.innerHTML = `
+                <h3>Search Completed</h3>
+                <p>Live Accounts: ${liveCount}</p>
+                <p>Check Accounts: ${checkCount}</p>
+            `;
+        }
+
+        async function searchInstagram(username, key, cookies) {
+            const headers = {
+                'Accept': '*/*',
+                'Accept-Language': 'id-MY,id;q=0.9,en-MY;q=0.8,en;q=0.7,id-ID;q=0.6,en-US;q=0.5',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+                'X-CSRFToken': getCsrfToken(cookies),
+                'X-Instagram-AJAX': '1',
+                'X-Requested-With': 'XMLHttpRequest',
+            };
+
+            const params = {
+                context: 'blended',
+                include_reel: 'true',
+                query: username,
+                rank_token: '0.011112346758721525',
+                search_surface: 'web_top_search',
+            };
+
+            const response = await fetch('https://www.instagram.com/api/v1/web/search/topsearch/', {
+                method: 'GET',
+                headers: headers,
+                cookies: `cookie=${cookies}`,
+                params: new URLSearchParams(params),
+            });
+
+            const data = await response.json();
+
+            if (data.users && data.users[0] && data.users[0].user) {
+                return 'live';  // Account found
+            } else {
+                return 'check';  // Account not found
+            }
+        }
+
+        function getCsrfToken(cookies) {
+            const match = cookies.match(/csrftoken=(.*?)(;|$)/);
+            return match ? match[1] : '';
+        }
+    </script>
+
+</body>
+</html>
